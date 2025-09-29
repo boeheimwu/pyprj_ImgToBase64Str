@@ -1,6 +1,7 @@
 #pip install img2html (已內含 pillow/PIL)
 import os
 import base64
+import sys
 from PIL import Image
 #from img2html.converter import Img2HTMLConverter
 
@@ -13,7 +14,7 @@ def target_html_name():
     return "output.html"
 
 def working_dir():
-    folder_path = "./"  # 可改成你的資料夾
+    folder_path = "./"  
     return folder_path
     
 def img_to_htmlimg():    
@@ -25,7 +26,7 @@ def img_to_htmlimg():
     # 取得資料夾內所有圖片檔
     image_files = [f for f in os.listdir(folder_path) if f.lower().endswith(supported_extensions)]
     image_files_len = len(image_files)
-    print(f"[start]img_to_htmlimg,image_files: {image_files_len}")
+    print(f"[start :: img_to_htmlimg],image_files: {image_files_len}")
     
     # 建立 table 的 rows
     table_rows = ""
@@ -104,7 +105,7 @@ def get_imgFn_join(sep):
     
 def begin_copy_with_jpg(fn):
     #print ("begin_copy_with_jpg")
-    file_name = os.path.basename(singleImg)
+    file_name = os.path.basename(fn)
     file = os.path.splitext(file_name)
     #print(file)  # returns tuple of string --> 輸出內容 ('1', '.jpg')
     print(f"[copy_src]fileName= {file[0]},extension={file[1]}")
@@ -123,7 +124,7 @@ def begin_copy_with_jpg(fn):
 
 def begin_copy_with_png(fn):
     #print ("begin_copy_with_png")
-    file_name = os.path.basename(singleImg)
+    file_name = os.path.basename(fn)
     file = os.path.splitext(file_name)
     #print(file)  # returns tuple of string --> 輸出內容 ('1', '.jpg')
     print(f"[copy_src]fileName= {file[0]},extension={file[1]}")
@@ -139,12 +140,60 @@ def begin_copy_with_png(fn):
     # 轉存為 GIF
     img.save(file[0]+".gif", "GIF")
 
-if __name__=="__main__":
+def task_clean():
+    print(f"[task_clean]")
+    folder_path = working_dir()
+    # 針對 html
+    html_output_file = target_html_name()
+    
+    dc_exist_file = os.path.join(folder_path, html_output_file) 
+    # 檢查檔案是否存在
+    if os.path.isfile(dc_exist_file):
+        os.remove(dc_exist_file)
+        print (f"[remove :: html]:{html_output_file}")
+    else:
+        print (f"contains 0 html")
+    
+    if get_img_cnt()==0 :
+        print (f"contains 0 image")
+    else:
+        # 支援的圖片副檔名
+        supported_extensions = img_def_extensions()
+        # 取得資料夾內所有圖片檔
+        image_files = [f for f in os.listdir(folder_path) if f.lower().endswith(supported_extensions)]
+        for f in image_files:
+            dc_file_name = os.path.basename(f)
+            os.remove(f)
+            print (f"[remove :: img]{dc_file_name}")
+
+def task_gen():
+    if get_img_cnt()==0 :
+        print(f"[task_gen]no img exist")
+
     if get_img_cnt()==1 :
         singleImg = get_imgFn_join("|")
         if singleImg.lower().endswith(".png"):
             begin_copy_with_png(singleImg)
         if singleImg.lower().endswith(".jpg"):
             begin_copy_with_jpg(singleImg)
-    #===
-    img_to_htmlimg()
+
+    if get_img_cnt()>=1 :
+        img_to_htmlimg()
+
+def main():
+    if len(sys.argv)==2:
+        if(sys.argv[1]=="C"):
+            task_clean()
+        elif(sys.argv[1]=="G"):
+            task_gen()
+        else:
+            print("unknown parameter:", sys.argv[1])  
+    elif len(sys.argv)==1:
+            print("must enter taks_param[(C)lean, (G)en]")  
+            print("python appCoder.py C")  
+            print("python appCoder.py G")  
+
+# python appCoder.py C
+# python appCoder.py G
+if __name__=="__main__":
+    main()
