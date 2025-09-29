@@ -59,7 +59,8 @@ def img_to_htmlimg():
             <tr>
                 <td>{file_name}</td>
                 <td>{file_size_kb} KB</td>
-                <td>{img_tag}</td>
+                <td>{img_tag}
+                </td>
             </tr>
         """
     
