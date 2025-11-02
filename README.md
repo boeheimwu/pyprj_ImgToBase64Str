@@ -3,3 +3,8 @@
 
 # run_app.cmd
 python appCoder.py
+
+# 補充
++ gnuplot
++ graphviz
+    + https://dreampuf.github.io/GraphvizOnline
