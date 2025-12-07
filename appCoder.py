@@ -2,6 +2,7 @@
 import os
 import base64
 import sys
+import webbrowser
 from PIL import Image
 #from img2html.converter import Img2HTMLConverter
 
@@ -11,26 +12,28 @@ def img_def_extensions():
     return supported_extensions
 
 def target_html_name():
-    return "output.html"
+    return "outImg.html"
 
 def working_dir():
     folder_path = "./"  
     return folder_path
-    
-def img_to_htmlimg():    
-    folder_path = working_dir()
-    html_output_file = target_html_name()
+
+def list_match_images(p_folder_path):
     # 支援的圖片副檔名
     supported_extensions = img_def_extensions()
     
-    # 取得資料夾內所有圖片檔
-    image_files = [f for f in os.listdir(folder_path) if f.lower().endswith(supported_extensions)]
-    image_files_len = len(image_files)
-    print(f"[start :: img_to_htmlimg],image_files: {image_files_len}")
+    # 取得資料夾內符合的圖片檔
+    image_files = [f for f in os.listdir(p_folder_path) if f.lower().endswith(supported_extensions)]
+    return image_files
+    
+def convert_img_to_outputhtml(folder_path, given_image_files):
+    html_output_file = target_html_name()
+    given_image_files_len = len(given_image_files)
+    print(f"[start :: img_to_htmlimg],given_image_files: {given_image_files_len}")
     
     # 建立 table 的 rows
     table_rows = ""
-    for img_file in image_files:
+    for img_file in given_image_files:
         file_path = os.path.join(folder_path, img_file)
         
         # 檢查檔案是否存在
@@ -48,18 +51,25 @@ def img_to_htmlimg():
         # 這是因為在 Python 3 中，字串（str）已經是 Unicode 格式，並不需要再進行解碼 decode()）。然而， 套件的某些版本仍然包含了 .decode('utf-8')
         #converter = Img2HTMLConverter()
         #img_tag = converter.convert(file_path)
-        with open(file_path, "rb") as img_file:
-            img_base64 = base64.b64encode(img_file.read()).decode("utf-8")
+        with open(file_path, "rb") as img_obj:
+            img_base64 = base64.b64encode(img_obj.read()).decode("utf-8")
+            file_ext = img_obj.name.split(".")[-1]
     
-        # 生成 <img> 標籤
-        img_tag = f'<img src="data:image/{img_file.name.split(".")[-1]};base64,{img_base64}" />'
+        #==== 生成 <img> 標籤
+        # img_tag = f'<img src="data:image/{file_ext};base64,{img_base64}" />'
+        # <td>{img_tag}
+        # </td>
         
         # 建立 table row
         table_rows += f"""
-            <tr>
+            <tr style='vertical-align:top;'>
                 <td>{file_name}</td>
                 <td>{file_size_kb} KB</td>
-                <td>{img_tag}
+                <td><img src="data:image/{file_ext};base64,{img_base64}" />
+                <hr/>
+                <table border="1" style="table-layout: fixed">
+                <tr><td style="width:500px;">&lt;img src="data:image/{file_ext};base64,{img_base64}" /&gt;</td>
+                </table>
                 </td>
             </tr>
         """
@@ -90,7 +100,34 @@ def img_to_htmlimg():
         f.write(html_content)
     
     print(f"[target_html is done]: {html_output_file}")
-    #print(f"共 {len(image_files)} 張圖片已加入 table。")
+  
+def img_to_htmlimg():    
+    raw_image_files = list_match_images(working_dir())
+    print(f"imageFiles[raw_order]", raw_image_files)
+    sorted_image_files = sort_img_by_size(working_dir(), raw_image_files)
+    print(f"imageFiles[sorted_order]", sorted_image_files)
+    convert_img_to_outputhtml(working_dir(), sorted_image_files)
+  
+def sort_img_by_size(folder_path, unsort_image_files):  
+    dict_1 = dict()
+    for img_file in unsort_image_files:
+        file_path = os.path.join(folder_path, img_file)
+        
+        # 檢查檔案是否存在
+        if not os.path.isfile(file_path):
+            print(f"檔案不存在: {file_path}")
+            continue
+    
+        # 取得檔名
+        file_name = os.path.basename(file_path)
+        
+        # 取得檔案大小 KB
+        file_size_kb = round(os.path.getsize(file_path) / 1024, 2)  
+        dict_1[file_name] = file_size_kb
+    #======
+    #print(f"[dict_1]", dict_1)
+    sorted_dict = dict(sorted(dict_1.items(), key=lambda item: item[1])) 
+    return list(sorted_dict.keys())
     
 def get_img_cnt():
     folder_path = working_dir()
@@ -187,6 +224,9 @@ def main():
             task_clean()
         elif(sys.argv[1]=="G"):
             task_gen()
+            # open html
+            filename = 'file:///'+os.getcwd()+'/' + target_html_name()
+            webbrowser.open_new_tab(filename)
         else:
             print("unknown parameter:", sys.argv[1])  
     elif len(sys.argv)==1:
